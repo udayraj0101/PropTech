@@ -23,6 +23,22 @@ export const LANDING_DEVELOPERS = [
   "AL AIN HOLDING",
 ] as const;
 
+/**
+ * Reelly developer IDs matching our 4 landing-page brands. Confirmed by
+ * probing `GET /api/v2/clients/developers` against the test tenant on
+ * 2026-10-29. "AL AIN HOLDING" is listed in Reelly's catalog as "ALAIN"
+ * (one word) — same entity.
+ *
+ * Used by `listProjectsForLandingDevelopers` to pass `developer=<id>` to
+ * Reelly's `/projects` endpoint, which only accepts numeric IDs.
+ */
+export const LANDING_DEVELOPER_IDS: Record<(typeof LANDING_DEVELOPERS)[number], number> = {
+  ALDAR: 46,
+  MODON: 326,
+  "EAGLE HILLS": 154,
+  "AL AIN HOLDING": 573,
+};
+
 export type ReellyProjectsResponse = {
   count?: number;
   next?: string | null;
@@ -359,17 +375,37 @@ export function developerLogo(name: string): string | undefined {
 }
 
 /**
- * Fetch and adapt every project the Reelly tenant exposes.
+ * Fetch projects for every landing-page developer in parallel (one
+ * Reelly request per developer id), then dedupe by project id. Uses
+ * Reelly's `developer=<id>` query filter which only accepts numeric
+ * IDs — see `LANDING_DEVELOPER_IDS`.
+ */
+export async function listProjectsForLandingDevelopers(): Promise<ReellyProject[]> {
+  const perDev = await Promise.all(
+    Object.values(LANDING_DEVELOPER_IDS).map((id) => listAllProjects({ developer: id }))
+  );
+  const seen = new Map<string | number, ReellyProject>();
+  for (const list of perDev) {
+    for (const project of list) {
+      if (project.id !== undefined) seen.set(project.id, project);
+    }
+  }
+  return Array.from(seen.values());
+}
+
+/**
+ * Fetch and adapt the Reelly projects the UI should display.
  *
- * NOTE: the four landing-page developers (ALDAR, MODON, EAGLE HILLS,
- * AL AIN HOLDING) are not present in the current test tenant — Reelly's
- * sample data covers 48 completely different developers (DAMAC, Emaar,
- * AHS Properties, …). Hard-filtering to the landing allowlist produced
- * zero rows, so we return everything and let the UI's developer dropdown
- * do the narrowing.
+ * Default: restrict to the 4 landing-page developers (ALDAR, MODON,
+ * EAGLE HILLS, AL AIN HOLDING / ALAIN). Set `REELLY_RESTRICT_TO_LANDING=0`
+ * in the environment to show every project instead (useful for debug or
+ * if we point the API key at a different tenant later).
  */
 export async function listReellyProjects(): Promise<AdaptedDevelopment[]> {
-  const results = await listAllProjects();
+  const restrict = process.env.REELLY_RESTRICT_TO_LANDING !== "0";
+  const results = restrict
+    ? await listProjectsForLandingDevelopers()
+    : await listAllProjects();
   return results.map(adaptProject);
 }
 

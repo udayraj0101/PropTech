@@ -49,9 +49,10 @@ export function nameFromEmail(email: string): string {
   );
 }
 
-// Role-specific landing pages after sign-in.
+// Role-specific landing pages after sign-in. Map is the default view for
+// both roles — operational flow starts from geography.
 export function roleHome(role: Role): string {
-  if (role === "admin") return "/admin";
+  if (role === "admin") return "/admin/map";
   if (role === "broker") return "/workspace/explore";
   return "/";
 }
