@@ -396,13 +396,21 @@ export async function listProjectsForLandingDevelopers(): Promise<ReellyProject[
 /**
  * Fetch and adapt the Reelly projects the UI should display.
  *
- * Default: restrict to the 4 landing-page developers (ALDAR, MODON,
- * EAGLE HILLS, AL AIN HOLDING / ALAIN). Set `REELLY_RESTRICT_TO_LANDING=0`
- * in the environment to show every project instead (useful for debug or
- * if we point the API key at a different tenant later).
+ * ───────────────────────────────────────────────────────────────────
+ * TEMPORARY: the 4-developer filter is OFF by default while we're on
+ * Reelly's free/demo API. The demo tenant only has 1 real project for
+ * our target developers (ALAIN) and nothing for ALDAR / MODON /
+ * EAGLE HILLS — so restricting makes the UI look empty. Showing all
+ * ~48 demo projects gives the client a proper feel for the UI.
+ *
+ * To re-enable the 4-developer restriction (when Reelly actually has
+ * data for ALDAR / MODON / Eagle Hills, e.g. on a paid plan or a
+ * different tenant), set `REELLY_RESTRICT_TO_LANDING=1` in the env.
+ * See `listProjectsForLandingDevelopers` for the implementation.
+ * ───────────────────────────────────────────────────────────────────
  */
 export async function listReellyProjects(): Promise<AdaptedDevelopment[]> {
-  const restrict = process.env.REELLY_RESTRICT_TO_LANDING !== "0";
+  const restrict = process.env.REELLY_RESTRICT_TO_LANDING === "1";
   const results = restrict
     ? await listProjectsForLandingDevelopers()
     : await listAllProjects();
