@@ -35,21 +35,32 @@
   outline-offset: 2px;
 }
 
-/* Strip Leaflet's default popup chrome — we render our own card inside */
+/* Strip Leaflet's default popup chrome — we render our own card inside.
+   `overflow: visible` is important so the inner card's shadow + badges
+   don't get clipped by Leaflet's wrapper. */
 .leaflet-popup.proptech-popup .leaflet-popup-content-wrapper {
   background: transparent;
   border-radius: 0;
   box-shadow: none;
   padding: 0;
+  overflow: visible;
 }
 .leaflet-popup.proptech-popup .leaflet-popup-content {
   margin: 0;
   width: 280px !important;
+  min-height: 0;
+  max-height: none;
   line-height: 1.3;
+  overflow: visible;
 }
-.leaflet-popup.proptech-popup .leaflet-popup-tip-container {
+.leaflet-popup.proptech-popup .leaflet-popup-tip-container,
+.leaflet-popup.proptech-popup .leaflet-popup-tip {
   display: none;
 }
 .leaflet-popup.proptech-popup .leaflet-popup-close-button {
   display: none;
+}
+/* Lift the popup above every marker on the layer */
+.leaflet-popup.proptech-popup {
+  z-index: 1000;
 }
