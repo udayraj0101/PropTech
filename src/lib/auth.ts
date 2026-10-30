@@ -4,6 +4,38 @@ export type Session = { email: string; name: string; role: Role };
 
 const KEY = "proptech.session";
 
+/**
+ * Hardcoded credentials for the demo build (UI phase, no backend yet).
+ * Only these two accounts can sign in; everything else is rejected by
+ * `validateCredentials` below. Investor role is not restricted — the
+ * portal isn't live yet.
+ *
+ * TODO: replace with a real /api/auth endpoint once the backend lands.
+ * Password-in-source is only safe here because the client never stores
+ * anything sensitive and the whole app is a demo.
+ */
+const CREDENTIALS: Partial<Record<Role, { email: string; password: string }>> = {
+  admin: { email: "admin@proptech.com", password: "proptech@admin" },
+  broker: { email: "broker@proptech.com", password: "proptech@broker" },
+};
+
+/**
+ * Returns true only when the role's single allowed email + password pair
+ * matches. Case-insensitive on the email; password must match exactly.
+ */
+export function validateCredentials(
+  role: Role,
+  email: string,
+  password: string
+): boolean {
+  const creds = CREDENTIALS[role];
+  if (!creds) return true; // roles without a hardcoded account (e.g. investor) pass through
+  return (
+    email.trim().toLowerCase() === creds.email.toLowerCase() &&
+    password === creds.password
+  );
+}
+
 export function getSession(): Session | null {
   if (typeof window === "undefined") return null;
   try {

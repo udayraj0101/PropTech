@@ -5,7 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogoMark } from "../brand/Logo";
 import Display from "../ui/Display";
-import { getSession, nameFromEmail, roleHome, saveSession, type Role } from "../../lib/auth";
+import {
+  getSession,
+  nameFromEmail,
+  roleHome,
+  saveSession,
+  validateCredentials,
+  type Role,
+} from "../../lib/auth";
 
 type Config = {
   eyebrow: string;
@@ -90,9 +97,14 @@ export default function AuthLogin({ role }: { role: Role }) {
       setError("Enter your email and password to continue.");
       return;
     }
+    // Demo build — single hardcoded account per role (see lib/auth.ts).
+    // TODO: swap for real /api/auth call once the backend is built.
+    if (!validateCredentials(role, email, password)) {
+      setError("Invalid credentials. Please check your email and password.");
+      return;
+    }
     setError("");
     setLoading(true);
-    // TODO: swap for real /api/auth call once the backend is built.
     const name = nameFromEmail(email.trim());
     try {
       saveSession({ email: email.trim(), name, role });
